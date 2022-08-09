@@ -13,9 +13,7 @@ import org.jsoup.nodes.Element;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class Main {
     private static List<String> loadsDataFromDatabaseBySql(Connection connection, String sql) throws SQLException {
@@ -32,7 +30,6 @@ public class Main {
     public static void main(String[] args) throws IOException, SQLException {
         Connection connection = DriverManager.getConnection("jdbc:h2:file:C:\\Users\\gyenno\\Desktop\\crawler\\news", "root", "root");
         //从数据库中加载即将处理的链接
-        Set<String> processedLinks = new HashSet<String>(loadsDataFromDatabaseBySql(connection, "select link from links_to_be_processed"));
         while (true) {
             List<String> linkPool = loadsDataFromDatabaseBySql(connection, "select link from links_to_be_processed");
             if (linkPool.isEmpty()) {
@@ -49,15 +46,7 @@ public class Main {
                 link = "https:" + link;
             }
             //判断链接是否被处理过  通过读取数据判断当前链接是否被处理过
-            Boolean flag = false;
-            try (PreparedStatement statement = connection.prepareStatement("select link from links_already_processed where link=?")) {
-                statement.setString(1, link);
-                ResultSet resultSet = statement.executeQuery();
-                while (resultSet.next()) {
-                    flag = true;
-                }
-            }
-            if (flag) {
+            if (isLinkProcessed(connection, link)) {
                 continue;
             }
             //判断是否为我们想要处理的链接 暂时只处理 news.sina.cn 并且过滤掉一些不为新闻的链接
@@ -67,24 +56,40 @@ public class Main {
                 Document doc = httpGetAndHtmlParse(link);
                 for (Element aTag : doc.select("a")) {
                     String href = aTag.attr("href");
-                    try (PreparedStatement statement = connection.prepareStatement("insert into links_to_be_processed(link) values(?)")) {
-                        statement.setString(1, href);
-                        statement.executeUpdate();
-                    }
+                    insertLinkIntoDatabase(connection, href, "insert into links_to_be_processed(link) values(?)");
                 }
                 //如果是一个新闻详情的界面 就存入数据库 否则什么都不做
-                ArrayList<Element> articleTags = doc.select("article");
-                for (Element articleTag : articleTags) {
-                    //通过分析新闻的详情界面，分析接口并获取相关标题文本数据
-                    String title = articleTag.child(0).text();
-                    System.out.println(title);
-                }
+                storeLinkIntoDatabaseIfIsNewsPage(doc);
                 System.out.println(link);
-                try (PreparedStatement statement = connection.prepareStatement("insert into links_already_processed(link) values(?)")) {
-                    statement.setString(1, link);
-                    statement.executeUpdate();
-                }
+                insertLinkIntoDatabase(connection, link, "insert into links_already_processed(link) values(?)");
             }
+        }
+    }
+
+    private static Boolean isLinkProcessed(Connection connection, String link) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("select link from links_already_processed where link=?")) {
+            statement.setString(1, link);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void storeLinkIntoDatabaseIfIsNewsPage(Document doc) {
+        ArrayList<Element> articleTags = doc.select("article");
+        for (Element articleTag : articleTags) {
+            //通过分析新闻的详情界面，分析接口并获取相关标题文本数据
+            String title = articleTag.child(0).text();
+            System.out.println(title);
+        }
+    }
+
+    private static void insertLinkIntoDatabase(Connection connection, String link, String sql) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, link);
+            statement.executeUpdate();
         }
     }
 
