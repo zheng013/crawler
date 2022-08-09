@@ -73,7 +73,7 @@ public class Main {
     }
 
     private static boolean isIndexPage(String link) {
-        return "https://sina.cn" == link;
+        return "https://sina.cn".equals(link);
     }
 
     private static boolean isNotLoginPage(String link) {
