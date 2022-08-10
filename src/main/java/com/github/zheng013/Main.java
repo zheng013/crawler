@@ -16,28 +16,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    private static List<String> loadsDataFromDatabaseBySql(Connection connection, String sql) throws SQLException {
-        List<String> results = new ArrayList<String>();
+    private static String getNextLink(Connection connection, String sql) throws SQLException {
+        String link = null;
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                results.add(resultSet.getString(1));
+                link = resultSet.getString(1);
             }
         }
-        return results;
+        return link;
     }
 
     public static void main(String[] args) throws IOException, SQLException {
         Connection connection = DriverManager.getConnection("jdbc:h2:file:C:\\Users\\gyenno\\Desktop\\crawler\\news", "root", "root");
         //从数据库中加载即将处理的链接
         while (true) {
-            List<String> linkPool = loadsDataFromDatabaseBySql(connection, "select link from links_to_be_processed");
-            if (linkPool.isEmpty()) {
+            String link = getNextLink(connection, "select link from links_to_be_processed");
+            if (null == link) {
                 break;
             }
             //获取link链接之后需要立刻进行删除。从ArrayList尾部进行删除更有效率 remove删除相关索引值并返回对应的元素
             //处理完链接之后出待处理的数据库池中删除
-            String link = linkPool.remove(linkPool.size() - 1);
             try (PreparedStatement statement = connection.prepareStatement("delete from links_to_be_processed where link = ?")) {
                 statement.setString(1, link);
                 statement.executeUpdate();
@@ -92,7 +91,6 @@ public class Main {
             statement.executeUpdate();
         }
     }
-
 
     private static Document httpGetAndHtmlParse(String link) throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
