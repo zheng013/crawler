@@ -37,10 +37,7 @@ public class Main {
             }
             //获取link链接之后需要立刻进行删除。从ArrayList尾部进行删除更有效率 remove删除相关索引值并返回对应的元素
             //处理完链接之后出待处理的数据库池中删除
-            try (PreparedStatement statement = connection.prepareStatement("delete from links_to_be_processed where link = ?")) {
-                statement.setString(1, link);
-                statement.executeUpdate();
-            }
+            updateDatabase(connection, link, "delete from links_to_be_processed where link = ?");
             if (link.startsWith("//")) {
                 link = "https:" + link;
             }
@@ -53,15 +50,26 @@ public class Main {
                 //只有我们感兴趣的才处理他
                 // 获取可用的a标签的href放入到链接池linkPool中
                 Document doc = httpGetAndHtmlParse(link);
-                for (Element aTag : doc.select("a")) {
-                    String href = aTag.attr("href");
-                    insertLinkIntoDatabase(connection, href, "insert into links_to_be_processed(link) values(?)");
-                }
+                parseUrlsFromPageStoreIntoDatabase(connection, doc);
                 //如果是一个新闻详情的界面 就存入数据库 否则什么都不做
                 storeLinkIntoDatabaseIfIsNewsPage(doc);
                 System.out.println(link);
-                insertLinkIntoDatabase(connection, link, "insert into links_already_processed(link) values(?)");
+                updateDatabase(connection, link, "insert into links_already_processed(link) values(?)");
             }
+        }
+    }
+
+    private static void parseUrlsFromPageStoreIntoDatabase(Connection connection, Document doc) throws SQLException {
+        for (Element aTag : doc.select("a")) {
+            String href = aTag.attr("href");
+            updateDatabase(connection, href, "insert into links_to_be_processed(link) values(?)");
+        }
+    }
+
+    private static void updateDatabase(Connection connection, String link, String sql) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, link);
+            statement.executeUpdate();
         }
     }
 
@@ -82,13 +90,6 @@ public class Main {
             //通过分析新闻的详情界面，分析接口并获取相关标题文本数据
             String title = articleTag.child(0).text();
             System.out.println(title);
-        }
-    }
-
-    private static void insertLinkIntoDatabase(Connection connection, String link, String sql) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, link);
-            statement.executeUpdate();
         }
     }
 
