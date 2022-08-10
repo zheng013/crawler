@@ -30,14 +30,8 @@ public class Main {
     public static void main(String[] args) throws IOException, SQLException {
         Connection connection = DriverManager.getConnection("jdbc:h2:file:C:\\Users\\gyenno\\Desktop\\crawler\\news", "root", "root");
         //从数据库中加载即将处理的链接
-        while (true) {
-            String link = getNextLink(connection, "select link from links_to_be_processed");
-            if (null == link) {
-                break;
-            }
-            //获取link链接之后需要立刻进行删除。从ArrayList尾部进行删除更有效率 remove删除相关索引值并返回对应的元素
-            //处理完链接之后出待处理的数据库池中删除
-            updateDatabase(connection, link, "delete from links_to_be_processed where link = ?");
+        String link = null;
+        while ((link = getNextLinkAndDeleteFromDatabase(connection)) != null) {
             if (link.startsWith("//")) {
                 link = "https:" + link;
             }
@@ -57,6 +51,16 @@ public class Main {
                 updateDatabase(connection, link, "insert into links_already_processed(link) values(?)");
             }
         }
+    }
+
+    private static String getNextLinkAndDeleteFromDatabase(Connection connection) throws SQLException {
+        String link = getNextLink(connection, "select link from links_to_be_processed limit 1");
+        if (null != link) {
+            updateDatabase(connection, link, "delete from links_to_be_processed where link = ?");
+        }
+        //获取link链接之后需要立刻进行删除。从ArrayList尾部进行删除更有效率 remove删除相关索引值并返回对应的元素
+        //处理完链接之后出待处理的数据库池中删除
+        return link;
     }
 
     private static void parseUrlsFromPageStoreIntoDatabase(Connection connection, Document doc) throws SQLException {
