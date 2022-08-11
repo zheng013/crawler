@@ -36,15 +36,32 @@ public class Main {
                 //只有我们感兴趣的才处理他
                 // 获取可用的a标签的href放入到链接池linkPool中
                 Document doc = httpGetAndHtmlParse(link);
-                dao.parseUrlsFromPageStoreIntoDatabase(doc);
+                parseUrlsFromPageStoreIntoDatabase(doc);
                 //如果是一个新闻详情的界面 就存入数据库 否则什么都不做
-                dao.storeLinkIntoDatabaseIfIsNewsPage(doc, link);
+                storeLinkIntoDatabaseIfIsNewsPage(doc, link);
                 System.out.println(link);
                 dao.updateDatabase(link, "insert into links_already_processed(link) values(?)");
             }
         }
     }
 
+    private static void storeLinkIntoDatabaseIfIsNewsPage(Document doc, String link) throws SQLException {
+        ArrayList<Element> articleTags = doc.select("article");
+        for (Element articleTag : articleTags) {
+            //通过分析新闻的详情界面，分析接口并获取相关标题文本数据
+            String title = articleTag.child(0).text();
+            List<Element> paragraphs = articleTag.select("p");
+            String content = paragraphs.stream().map(Element::text).collect(Collectors.joining("\n"));
+            dao.insertNewsIntoDatabase(link, title, content);
+        }
+    }
+
+    private static void parseUrlsFromPageStoreIntoDatabase(Document doc) throws SQLException {
+        for (Element aTag : doc.select("a")) {
+            String href = aTag.attr("href");
+            dao.updateDatabase(href, "insert into links_to_be_processed(link) values(?)");
+        }
+    }
 
     private static Document httpGetAndHtmlParse(String link) throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
