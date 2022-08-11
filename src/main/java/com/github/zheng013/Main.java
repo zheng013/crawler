@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main {
     private static String getNextLink(Connection connection, String sql) throws SQLException {
@@ -46,7 +47,7 @@ public class Main {
                 Document doc = httpGetAndHtmlParse(link);
                 parseUrlsFromPageStoreIntoDatabase(connection, doc);
                 //如果是一个新闻详情的界面 就存入数据库 否则什么都不做
-                storeLinkIntoDatabaseIfIsNewsPage(doc);
+                storeLinkIntoDatabaseIfIsNewsPage(doc, connection, link);
                 System.out.println(link);
                 updateDatabase(connection, link, "insert into links_already_processed(link) values(?)");
             }
@@ -88,11 +89,20 @@ public class Main {
         return false;
     }
 
-    private static void storeLinkIntoDatabaseIfIsNewsPage(Document doc) {
+    private static void storeLinkIntoDatabaseIfIsNewsPage(Document doc, Connection connection, String link) throws SQLException {
         ArrayList<Element> articleTags = doc.select("article");
         for (Element articleTag : articleTags) {
             //通过分析新闻的详情界面，分析接口并获取相关标题文本数据
             String title = articleTag.child(0).text();
+            List<Element> paragraphs = articleTag.select("p");
+            String content = paragraphs.stream().map(Element::text).collect(Collectors.joining("\n"));
+            try (PreparedStatement statement = connection.prepareStatement("insert into news(title,content,url,created_at,modified_at) values(?,?,?,now(),now())")) {
+                statement.setString(1, title);
+                statement.setString(2, content);
+                statement.setString(3, link);
+                statement.executeUpdate();
+            }
+            System.out.println(content);
             System.out.println(title);
         }
     }
