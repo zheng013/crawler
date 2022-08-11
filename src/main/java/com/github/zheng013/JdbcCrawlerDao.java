@@ -1,19 +1,13 @@
 package com.github.zheng013;
 
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
-public class DatabaseAccessObject {
+public class JdbcCrawlerDao implements CrawlerDao {
     private static final String user = "root";
     private static final String password = "root";
     private final Connection connection;
 
-    public DatabaseAccessObject() {
+    public JdbcCrawlerDao() {
         try {
             this.connection = DriverManager.getConnection("jdbc:h2:file:C:\\Users\\gyenno\\Desktop\\crawler\\news", user, password);
         } catch (SQLException e) {
@@ -21,6 +15,7 @@ public class DatabaseAccessObject {
         }
 
     }
+    @Override
     public String getNextLink(String sql) throws SQLException {
         String link = null;
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -31,6 +26,7 @@ public class DatabaseAccessObject {
         }
         return link;
     }
+    @Override
     public String getNextLinkAndDeleteFromDatabase() throws SQLException {
         String link = getNextLink("select link from links_to_be_processed limit 1");
         if (null != link) {
@@ -40,12 +36,14 @@ public class DatabaseAccessObject {
         //处理完链接之后出待处理的数据库池中删除
         return link;
     }
+    @Override
     public void updateDatabase(String link, String sql) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, link);
             statement.executeUpdate();
         }
     }
+    @Override
     public Boolean isLinkProcessed(String link) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("select link from links_already_processed where link=?")) {
             statement.setString(1, link);
@@ -56,6 +54,7 @@ public class DatabaseAccessObject {
         }
         return false;
     }
+    @Override
     public void insertNewsIntoDatabase(String link, String title, String content) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("insert into news(title,content,url,created_at,modified_at) values(?,?,?,now(),now())")) {
             statement.setString(1, title);

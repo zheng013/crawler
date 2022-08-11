@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-    private static final DatabaseAccessObject dao = new DatabaseAccessObject();
+    private static final CrawlerDao dao = new JdbcCrawlerDao();
 
     public static void main(String[] args) throws IOException, SQLException {
         //从数据库中加载即将处理的链接
