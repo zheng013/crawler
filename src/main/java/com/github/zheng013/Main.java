@@ -40,7 +40,7 @@ public class Main {
                 //如果是一个新闻详情的界面 就存入数据库 否则什么都不做
                 storeLinkIntoDatabaseIfIsNewsPage(doc, link);
                 System.out.println(link);
-                dao.updateDatabase(link, "insert into links_already_processed(link) values(?)");
+                dao.insertIntoAlreadyProcessedLink(link);
             }
         }
     }
@@ -59,7 +59,7 @@ public class Main {
     private static void parseUrlsFromPageStoreIntoDatabase(Document doc) throws SQLException {
         for (Element aTag : doc.select("a")) {
             String href = aTag.attr("href");
-            dao.updateDatabase(href, "insert into links_to_be_processed(link) values(?)");
+            dao.insertIntoToBeProcessedLink(href);
         }
     }
 
