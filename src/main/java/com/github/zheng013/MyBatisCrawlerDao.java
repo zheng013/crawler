@@ -7,6 +7,7 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class MyBatisCrawlerDao implements CrawlerDao {
@@ -40,21 +41,32 @@ public class MyBatisCrawlerDao implements CrawlerDao {
 
     @Override
     public String getNextLinkAndDeleteFromDatabase() throws SQLException {
-        return null;
+        String link = null;
+        try (SqlSession sqlSession = sqlSessionFactory.openSession(true)) {
+            link = (String) sqlSession.selectOne("com.github.zheng013.MyMapper.selectNextLink");
+            if (link != null) {
+                sqlSession.delete("com.github.zheng013.MyMapper.deleteLink", link);
+            }
+        }
+        return link;
     }
 
     @Override
     public void updateDatabase(String link, String sql) throws SQLException {
-
     }
 
     @Override
     public Boolean isLinkProcessed(String link) throws SQLException {
-        return null;
+        try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
+            int count = sqlSession.selectOne("com.github.zheng013.countLink", link);
+            return count != 0;
+        }
     }
 
     @Override
     public void insertNewsIntoDatabase(String link, String title, String content) throws SQLException {
-
+        try (SqlSession sqlSession = sqlSessionFactory.openSession(true)) {
+            sqlSession.insert("com.github.zheng013.insertNews", new News(title, content, link));
+        }
     }
 }
