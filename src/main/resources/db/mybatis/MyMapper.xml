@@ -6,4 +6,15 @@
     <select id="selectNextLink" resultType="String">
         select link from LINKS_TO_BE_PROCESSED LIMIT 1
     </select>
+    <delete id="deleteLink" parameterType="String">
+        delete from LINKS_TO_BE_PROCESSED
+        where link=#{link}
+    </delete>
+    <insert id="insertNews" parameterType="com.github.zheng013.News">
+        insert into NEWS(id,title,content,url,created_at,modified_at)
+        values(#{id},#{title},#{content},#{url},now(),now())
+    </insert>
+    <select id="countLink" parameterType="String" resultType="int">
+        select count(link) from LINKS_ALREADY_PROCESSED where link=#{link}
+    </select>
 </mapper>
