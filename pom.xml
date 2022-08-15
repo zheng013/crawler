@@ -88,6 +88,18 @@
             <artifactId>mybatis</artifactId>
             <version>3.5.10</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.17</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/annotations -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+            <version>3.0.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -143,7 +155,7 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>5.2.4</version>
                 <configuration>
-                    <url>jdbc:h2:file:C:\Users\gyenno\Desktop\crawler\news</url>
+                    <url>jdbc:mysql://localhost:3306/news?useSSL=false</url>
                     <user>root</user>
                     <password>root</password>
                 </configuration>
