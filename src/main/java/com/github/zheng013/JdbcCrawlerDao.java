@@ -1,7 +1,6 @@
 package com.github.zheng013;
 
-
-import org.graalvm.compiler.options.SuppressFBWarnings;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.sql.*;
 
@@ -9,7 +8,7 @@ public class JdbcCrawlerDao implements CrawlerDao {
     private static final String user = "root";
     private static final String password = "root";
     private final Connection connection;
-    @SuppressFBWarnings(value = "DMI_CONSTANT_DB_PASSWORD", justification = "just test connect database")
+    @SuppressFBWarnings("DMI_CONSTANT_DB_PASSWORD")
     public JdbcCrawlerDao() {
         try {
             this.connection = DriverManager.getConnection("jdbc:h2:file:C:\\Users\\gyenno\\Desktop\\crawler\\news", user, password);
