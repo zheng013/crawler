@@ -21,13 +21,13 @@
         insert into
         <choose>
             <when test="tableName=='links_already_processed'">
-                links_already_processed
+                LINKS_ALREADY_PROCESSED
             </when>
             <otherwise>
-                links_to_be_processed
+                LINKS_TO_BE_PROCESSED
             </otherwise>
         </choose>
         (link)
-        values #{link}
+        values (#{link})
     </insert>
 </mapper>
