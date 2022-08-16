@@ -155,7 +155,7 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>5.2.4</version>
                 <configuration>
-                    <url>jdbc:mysql://localhost:3306/news?useSSL=false</url>
+                    <url>jdbc:mysql://localhost:3306/news?useSSL=false&amp;characterEncoding=utf-8</url>
                     <user>root</user>
                     <password>root</password>
                 </configuration>
