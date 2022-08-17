@@ -1,9 +1,44 @@
 package com.github.zheng013;
 
+import java.time.Instant;
+
 public class News {
     //有可能id为null 使用integer类型
     private Integer id;
     private String title;
+    private String content;
+    private String url;
+    private Instant createdAt;
+    private Instant modifiedAt;
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getModifiedAt() {
+        return modifiedAt;
+    }
+
+    public void setModifiedAt(Instant modifiedAt) {
+        this.modifiedAt = modifiedAt;
+    }
+
+
+    public News() {
+    }
+
+    public News(News old) {
+        this.id = old.id;
+        this.title = old.title;
+        this.content = old.content;
+        this.url = old.url;
+        this.createdAt = old.createdAt;
+        this.modifiedAt = old.modifiedAt;
+    }
 
     public News(String title, String content, String url) {
         this.title = title;
@@ -43,6 +78,5 @@ public class News {
         this.url = url;
     }
 
-    private String content;
-    private String url;
+
 }
